@@ -31,6 +31,7 @@ KEEPALIVE_INTERVAL = 30                          # seconds between SSE keep-aliv
 buffer: deque[dict] = deque(maxlen=MAX_BUFFER)
 _next_id = 0
 _cond = asyncio.Condition()
+_subscribers = 0
 
 
 def _next_id_inc() -> int:
@@ -93,20 +94,25 @@ def _format_event(m: dict) -> str:
 
 
 async def _event_stream(since: int) -> AsyncIterator[str]:
-    cursor = since
-    for m in _buffer_after(cursor):
-        yield _format_event(m)
-        cursor = m["id"]
-    while True:
-        async with _cond:
-            try:
-                await asyncio.wait_for(_cond.wait(), timeout=KEEPALIVE_INTERVAL)
-            except asyncio.TimeoutError:
-                yield ": keep-alive\n\n"
-                continue
+    global _subscribers
+    _subscribers += 1
+    try:
+        cursor = since
         for m in _buffer_after(cursor):
             yield _format_event(m)
             cursor = m["id"]
+        while True:
+            async with _cond:
+                try:
+                    await asyncio.wait_for(_cond.wait(), timeout=KEEPALIVE_INTERVAL)
+                except asyncio.TimeoutError:
+                    yield ": keep-alive\n\n"
+                    continue
+            for m in _buffer_after(cursor):
+                yield _format_event(m)
+                cursor = m["id"]
+    finally:
+        _subscribers -= 1
 
 
 # ---------------------------------------------------------------------------
@@ -122,7 +128,7 @@ async def validation_error_handler(request, exc):
 
 @app.get("/health")
 async def health():
-    return {"ok": True, "buffer": len(buffer), "subscribers": 0}
+    return {"ok": True, "buffer": len(buffer), "subscribers": _subscribers}
 
 
 @app.post("/msg", dependencies=[Depends(_check_auth)])
