@@ -37,6 +37,22 @@ Behavior rules:
 
 `text` must be ≤ 4096 chars, non-empty.
 
+## Environment
+
+| Var | Purpose | Set by |
+|---|---|---|
+| `RELAY_URL` | Relay endpoint | Jules session env |
+| `RELAY_TOKEN` | Relay auth | Jules session env |
+
+## Project snapshot
+
+- **Language:** Python 3.11+ (FastAPI + uvicorn)
+- **Install:** `pip install -r requirements.txt`
+- **Test:** `RELAY_TOKEN=test pytest -q test_relay.py`
+- **Lint:** none configured
+- **Deploy:** Render (free tier) via `render.yaml`
+- **Key files:** `relay.py`, `test_relay.py`, `SPEC.md`
+
 ---
 
 **This file is the canonical paste-target for any repo Jules operates on.**
