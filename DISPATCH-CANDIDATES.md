@@ -117,6 +117,50 @@ Everything else is noise. If the relay adds friction, don't use it for that task
 | 6 | Manual lead entry form (no LLM, just form fields + score) | Small |
 | 7 | LLM parsing layer for plain English call descriptions | Medium |
 
+**Dependency graph — what can run concurrently:**
+
+The spec defines all data fields upfront, so most steps don't actually
+depend on each other — they depend on the spec, which already exists.
+
+```
+Wave 0 — no runtime deps, parallelize freely
+├── 2a. Scoring engine implementation
+├── 2b. Scoring engine tests (thresholds, edge cases, negative scores)
+├── 3a. SQLite schema design
+└── 1a. Scraper scaffolding (structure + selectors, you verify output)
+
+Wave 1 — needs scoring engine + schema
+├── 4a. Flask/FastAPI backend (GET /properties, GET /properties/:id)
+├── 4b. Scoring CLI (score a single property from JSON, for testing)
+└── 1b. Assessor parser (different source, same output schema)
+
+Wave 2 — needs backend endpoints
+├── 5a. Map UI (Google Maps JS + color-coded pins, reads /properties)
+├── 6a. Property detail page (score breakdown, reads /properties/:id)
+└── 7a. Manual entry form (POST /properties, form fields only)
+
+Wave 3 — needs form
+└── 8a. LLM parsing layer (Claude Sonnet → pre-fill form fields)
+
+Wave 4 — needs everything
+└── 9a. Notifications (poll DB for new Tier A, alert via ???)
+```
+
+**Concrete parallel dispatch combos:**
+
+| Dispatch | Jules/Codex Task A | Jules/Codex Task B | Why They Don't Block |
+|---|---|---|---|
+| **Now** | Scoring engine + tests (2a+2b) | SQLite schema (3a) | Both read from spec §3. No shared runtime. |
+| **Now** | Scoring engine + tests (2a+2b) | Scraper scaffolding (1a) | Scorer is pure logic. Scraper just needs to match the JSON schema. |
+| **Wave 1** | Backend API (4a) | Scoring CLI (4b) | API serves the DB. CLI is a standalone test tool. |
+| **Wave 2** | Map UI (5a) | Manual entry form (7a) | Both hit same API but different endpoints. |
+| **Wave 2** | Property detail (6a) | Manual entry form (7a) | Detail is read-only. Form is write. No collision. |
+
+**What should NOT run in parallel:**
+- Two agents modifying the same file
+- Scoring engine tests before the scoring engine is implemented
+- LLM parsing before the manual entry form works without it
+
 ## Notes
 
 - All repos above have AGENTS.md with relay block + Environment table + Project snapshot.
