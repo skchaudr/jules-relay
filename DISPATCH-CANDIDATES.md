@@ -5,8 +5,7 @@ Last updated: 2026-05-29.
 
 ## How the relay works during a task (concrete walkthrough)
 
-The relay is **not** a live progress stream. It's a gated checkpoint channel.
-Here is exactly what happens:
+The relay is a **finish line + escalation channel**, not a progress feed.
 
 ### Before the task starts
 
@@ -16,68 +15,51 @@ You open `listenj` in your terminal.
 Jules reads AGENTS.md, sees the relay block, opens an SSE subscription
 (`curl -N "$RELAY_URL/events" -H "Authorization: Bearer $RELAY_TOKEN" &`).
 
-### During the task — what Jules actually sends
+### During the task — what Jules sends
 
-Jules posts STATE messages **only at checkpoints**, not continuously.
-Think of it as guard rails, not a log feed:
-
-```
-STATE "starting task: implement check_performance() in vault-doctor"
-STATE "ran bash setup.sh — all deps verified, 23 tests pass"
-STATE "check_performance() implemented, 4 tests added"
-ASK   "about to modify cli.py to wire in the new method — proceed?"   ← gated
-```
-
-You see these in your `listenj` terminal. Most you ignore.
-The ASK ones are the ones that matter — Jules **pauses** at that point
-and waits for your ACK before continuing:
+**Three messages only:**
 
 ```
-ACK   "yes, proceed"        ← you send this via sayj
+STATE "starting: implement check_performance() in vault-doctor"    ← task start
+STATE "done: check_performance() added, 27 tests pass, on main"     ← task finish
+ASK   "deploy to prod or stay on branch?"                           ← blocked, needs you
 ```
 
-Then Jules continues:
-
-```
-STATE "cli.py updated, running full test suite"
-STATE "all 27 tests pass. task complete. PR-ready on main."
-```
+That's it. No checkpoints, no "about to run tests", no "deps verified".
+You fire off the task, go do other things, and see `done` when it's finished.
 
 ### What Jules does NOT do
 
-- It does NOT stream every file edit, every line of code, or every thought.
-- It does NOT post on a timer or at regular intervals.
-- It does NOT expect you to respond to every STATE.
-- It does NOT halt on STATE messages — only on ASK messages from you,
-  or when it hits something it classified as operator-gated (deploy,
-  migration, destructive ops, network calls with side effects).
+- It does NOT stream every file edit or every thought.
+- It does NOT post at regular intervals.
+- It does NOT expect you to respond to STATE messages.
+- It does NOT pause on STATE — only on ASK from you.
 
 ### The three message types and when they're used
 
-| Kind | Who sends it | What it means | Does the other side pause? |
+| Kind | Who sends it | When | Does the other side pause? |
 |---|---|---|---|
-| `STATE` | Jules | "Here's where I am." Checkpoint only. | No — you can ignore it. |
-| `STATE` | You | "Here's where you are / here's context." | No — Jules logs it, keeps going. |
-| `ASK` | You | "Don't do X, do Y instead" or "pause and confirm" | **Yes** — Jules pauses that specific step. |
-| `ACK` | You | "Yes, proceed with what you asked about" | Unpauses the gated step. |
-| `ASK` | Jules | Rare — Jules asking you a question | You respond with ACK or a new ASK. |
+| `STATE` | Jules | Task start and task finish only | No |
+| `STATE` | You | Mid-course correction (optional, rare) | No |
+| `ASK` | You | "Stop, do Y instead" or "don't deploy yet" | **Yes** — Jules pauses that step |
+| `ACK` | You | "Proceed with what you asked about" | Unpauses the gated step |
+| `ASK` | Jules | Genuinely blocked, needs human input | Waits for your ACK or ASK back |
 
 ### The actual value
 
-The relay is useful in three real scenarios:
+The relay is useful in very few scenarios — and that's the point:
 
-1. **Deploy gates.** Jules is about to push to main or deploy. It posts STATE,
-   you see it, you can ACK or redirect. Without the relay, Jules just does it
-   or you have to watch the web UI.
+1. **Async finish notification.** You dispatch a task, close the tab, come back
+   when you see `done` in your terminal. No polling the web UI.
 
-2. **Direction changes mid-task.** You realize the task brief was wrong.
-   You send `ASK "stop working on X, switch to Y"`. Jules receives it via SSE
-   and pivots. Without the relay, you'd have to open the web UI and type into
-   the chat, which may already be past that point.
+2. **Mid-course redirect.** You realize the brief was wrong. Send one ASK,
+   Jules pivots. Without the relay, you'd have to open the web UI and hope
+   it hasn't already passed that point.
 
-3. **Multi-agent coordination.** Codex and Jules are both working.
-   They can see each other's STATE messages on the same relay and avoid
-   stepping on each other's files.
+3. **Deploy block.** Jules hits a deploy step and posts ASK. You ACK when
+   you're ready. Without the relay, it just deploys.
+
+Everything else is noise. If the relay adds friction, don't use it for that task.
 
 ---
 
