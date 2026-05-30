@@ -82,7 +82,40 @@ Everything else is noise. If the relay adds friction, don't use it for that task
 
 ## Beiley Tasks (pending)
 
-<!-- Add new tasks here as they come up -->
+### sc-landscape-lead-intel-system
+
+**Repo:** `sc-landscape-lead-intel-system` (fresh fork, main branch)
+**Client:** Bailey Water & Stone — Santa Cruz CA
+**Spec:** `context-for-system.md` (full spec + UI flow + scoring engine + architecture)
+
+**Build order (from spec §9):**
+1. Scraper — Redfin + Santa Cruz County Assessor → normalized JSON
+2. Scoring engine — rules-based Python, testable in isolation
+3. SQLite schema — store scored properties
+4. Basic web UI — map + pins, read-only
+5. Property detail view — tap pin, see score breakdown
+6. Manual entry form — inbound calls, no LLM yet
+7. LLM parsing layer — bolt on after form works
+8. Notifications — alert on new Tier A sales
+
+**Tech stack:** Python + BeautifulSoup → Flask/FastAPI → SQLite → HTML + Tailwind + Google Maps JS
+**LLM scope:** Manual entry parsing only (Claude Sonnet via API)
+**Hosting:** Pi via Tailscale now, Vercel + Supabase later
+**All data sources are free** — no API keys required to start (Google Maps free tier is bonus)
+
+**Good Jules tasks to dispatch from this:**
+| Step | Task Brief | Size |
+|---|---|---|
+| 1 | Build Redfin scraper for Santa Cruz sold listings → JSON | Small |
+| 1 | Build County Assessor scraper (or bulk export parser) → JSON | Small |
+| 2 | Implement scoring engine with all factors from spec §3 | Small |
+| 2 | Write tests for scoring engine (thresholds, edge cases) | Tiny |
+| 3 | Design SQLite schema for properties table | Tiny |
+| 4 | Flask/FastAPI backend that serves scored properties as JSON | Small |
+| 4 | Map view with Google Maps JS + color-coded pins | Medium |
+| 5 | Property detail page with score breakdown | Small |
+| 6 | Manual lead entry form (no LLM, just form fields + score) | Small |
+| 7 | LLM parsing layer for plain English call descriptions | Medium |
 
 ## Notes
 
