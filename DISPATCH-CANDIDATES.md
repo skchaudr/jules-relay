@@ -28,10 +28,8 @@ ASK   "deploy to prod or stay on branch?"                           ← blocked,
 That's it. No checkpoints, no "about to run tests", no "deps verified".
 You fire off the task, go do other things, and see `done` when it's finished.
 
-### What Jules does NOT do
+### What Jules doesn't expect 
 
-- It does NOT stream every file edit or every thought.
-- It does NOT post at regular intervals.
 - It does NOT expect you to respond to STATE messages.
 - It does NOT pause on STATE — only on ASK from you.
 
@@ -157,8 +155,7 @@ Wave 4 — needs everything
 | **Wave 2** | Property detail (6a) | Manual entry form (7a) | Detail is read-only. Form is write. No collision. |
 
 **What should NOT run in parallel:**
-- Two agents modifying the same file
-- Scoring engine tests before the scoring engine is implemented
+- Scoring engine tests before the scoring engine is implemented -- huh? Against TDD? Or just lazy AI-TDD? 
 - LLM parsing before the manual entry form works without it
 
 ## Notes
