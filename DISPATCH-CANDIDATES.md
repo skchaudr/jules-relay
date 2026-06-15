@@ -1,7 +1,7 @@
 # Dispatch Candidates
 
 Repos with relay-enabled AGENTS.md + setup.sh, ready for Jules/Codex tasks.
-Last updated: 2026-05-29.
+Last updated: 2026-06-11.
 
 ## How the relay works during a task (concrete walkthrough)
 
@@ -74,9 +74,27 @@ Everything else is noise. If the relay adds friction, don't use it for that task
 | gddp-runtime | docs/share-pdf | Add error handling + retry to `intake_server.py` | Small — robustness pass | dry_run.py verifies pipeline end-to-end |
 | aqua-stone-studio | feat/premium-media-library | Add testimonials carousel or new page section | Medium | Build verified, shadcn/ui components available |
 | saboorkc.dev | main | Add new content piece or update portfolio layout | Small–Medium | Next.js build verified |
-| karoake-players-intro | chore/jules-relay-agents | Add tests for Flask app endpoints | Small — no tests exist yet | Flask app import verified |
+| karoake-players-intro | main | Add multi-event support or export state to CSV/JSON | Small–Medium | 5 test suites already exist, build verified, active event features |
 | gddp-config | feat/openclaw-nodes | Add a new rule/schema YAML and validate it | Small — declarative | YAML validation in setup.sh |
 | jules-relay | main | Add `/stats` endpoint (message counts by kind/from) | Tiny | Relay already live, tests need running server |
+
+### New candidates (added 2026-06-11)
+
+| Repo | Branch | Possible Task | Scope | Why It's Good |
+|---|---|---|---|---|
+| aa-cli | main | Add AGENTS.md + setup.sh relay enablement; then implement `aa reconcile` auto-accept flow | Medium | Active zsh CLI with spec v2 + acceptance tests; task compiler/dispatcher |
+| smb-ops-hub | main | Add AGENTS.md + relay block; then wire QB sync retry with logging | Small–Medium | Phase 0 integration done (SQLAlchemy + Postgres + auth), has tests |
+| bonny-doon-retreat | main | Add relay-style AGENTS.md block + setup.sh; then add booking confirmation email flow | Small | Has AGENTS.md (Claude-style), active dev (booking calendar, admin dashboard) |
+| one-month-launchpad | main | Add setup.sh; then implement next launch-week exercise template | Small | Has AGENTS.md + relay block, no setup.sh yet |
+| saboorkc.dev | main | Add case study or project page with CMS-free markdown pipeline | Small | Next.js build verified, recent copy rewrite + Sentry pass |
+
+### Completed tasks (2026-06-11 audit)
+
+| Repo | Task | Result |
+|---|---|---|
+| karoake-players-intro | Add tests for Flask app endpoints | ✅ Done — 5 test suites: test_app, test_persistence, test_show_template, test_admin_template, test_demo_state_loader |
+| sc-landscape-lead-intel-system | Scoring engine + tests (Wave 0) | ✅ Merged PR #1 — scoring/engine.py + tests/test_scoring.py |
+| sc-landscape-lead-intel-system | DB schema + models + CRUD (Wave 0) | ✅ Merged PR #2 — db/schema.py, db/models.py, db/crud.py + tests/test_db.py |
 
 ## Beiley Tasks (pending)
 
@@ -102,18 +120,21 @@ Everything else is noise. If the relay adds friction, don't use it for that task
 **All data sources are free** — no API keys required to start (Google Maps free tier is bonus)
 
 **Good Jules tasks to dispatch from this:**
-| Step | Task Brief | Size |
-|---|---|---|
-| 1 | Build Redfin scraper for Santa Cruz sold listings → JSON | Small |
-| 1 | Build County Assessor scraper (or bulk export parser) → JSON | Small |
-| 2 | Implement scoring engine with all factors from spec §3 | Small |
-| 2 | Write tests for scoring engine (thresholds, edge cases) | Tiny |
-| 3 | Design SQLite schema for properties table | Tiny |
-| 4 | Flask/FastAPI backend that serves scored properties as JSON | Small |
-| 4 | Map view with Google Maps JS + color-coded pins | Medium |
-| 5 | Property detail page with score breakdown | Small |
-| 6 | Manual lead entry form (no LLM, just form fields + score) | Small |
-| 7 | LLM parsing layer for plain English call descriptions | Medium |
+| Step | Task Brief | Size | Status |
+|---|---|---|---|
+| 1 | Build Redfin scraper for Santa Cruz sold listings → JSON | Small | |
+| 1 | Build County Assessor scraper (or bulk export parser) → JSON | Small | |
+| 2 | Implement scoring engine with all factors from spec §3 | Small | ✅ Merged PR #1 |
+| 2 | Write tests for scoring engine (thresholds, edge cases) | Tiny | ✅ Merged PR #1 |
+| 3 | Design SQLite schema for properties table | Tiny | ✅ Merged PR #2 |
+| 4 | FastAPI backend (GET/POST /properties, filtering, status updates) | Small | ← Next dispatch |
+| 4b | Scoring CLI (`score --json`, `--interactive`, `--example`) | Small | ← Next dispatch |
+| 5 | Map view with Google Maps JS + color-coded pins | Medium | |
+| 5b | Property detail page with score breakdown | Small | |
+| 6 | Manual lead entry form (no LLM, just form fields + score) | Small | |
+| 7 | LLM parsing layer for plain English call descriptions | Medium | |
+
+> Detailed dispatch briefs for Wave 1+ live in `docs/dispatch-briefs.md` and `docs/task-batches.md` in the repo.
 
 **Dependency graph — what can run concurrently:**
 
@@ -121,16 +142,16 @@ The spec defines all data fields upfront, so most steps don't actually
 depend on each other — they depend on the spec, which already exists.
 
 ```
-Wave 0 — no runtime deps, parallelize freely
-├── 2a. Scoring engine implementation
-├── 2b. Scoring engine tests (thresholds, edge cases, negative scores)
-├── 3a. SQLite schema design
-└── 1a. Scraper scaffolding (structure + selectors, you verify output)
+Wave 0 — ✅ DONE
+├── 2a. Scoring engine implementation         ✅ PR #1
+├── 2b. Scoring engine tests                  ✅ PR #1
+├── 3a. SQLite schema design                  ✅ PR #2
+└── 1a. Scraper scaffolding                   (deferred to Wave 4)
 
-Wave 1 — needs scoring engine + schema
-├── 4a. Flask/FastAPI backend (GET /properties, GET /properties/:id)
-├── 4b. Scoring CLI (score a single property from JSON, for testing)
-└── 1b. Assessor parser (different source, same output schema)
+Wave 1 — ← current wave (needs scoring engine + schema)
+├── 4a. FastAPI backend (GET/POST /properties, filtering, status)
+├── 4b. Scoring CLI (score --json, --interactive, --example)
+└── 1b. Assessor parser (deferred, same output schema)
 
 Wave 2 — needs backend endpoints
 ├── 5a. Map UI (Google Maps JS + color-coded pins, reads /properties)
@@ -148,9 +169,7 @@ Wave 4 — needs everything
 
 | Dispatch | Jules/Codex Task A | Jules/Codex Task B | Why They Don't Block |
 |---|---|---|---|
-| **Now** | Scoring engine + tests (2a+2b) | SQLite schema (3a) | Both read from spec §3. No shared runtime. |
-| **Now** | Scoring engine + tests (2a+2b) | Scraper scaffolding (1a) | Scorer is pure logic. Scraper just needs to match the JSON schema. |
-| **Wave 1** | Backend API (4a) | Scoring CLI (4b) | API serves the DB. CLI is a standalone test tool. |
+| **Now (Wave 1)** | FastAPI backend API (4a) | Scoring CLI (4b) | API serves the DB. CLI is a standalone test tool. No shared files. |
 | **Wave 2** | Map UI (5a) | Manual entry form (7a) | Both hit same API but different endpoints. |
 | **Wave 2** | Property detail (6a) | Manual entry form (7a) | Detail is read-only. Form is write. No collision. |
 
