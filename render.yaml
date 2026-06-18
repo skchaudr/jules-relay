@@ -3,8 +3,8 @@ services:
     name: jules-relay
     runtime: python
     plan: free
-    buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn relay:app --host 0.0.0.0 --port $PORT
+    buildCommand: cd relay && pip install -r requirements.txt
+    startCommand: cd relay && uvicorn relay:app --host 0.0.0.0 --port $PORT
     envVars:
       - key: RELAY_TOKEN
         generateValue: true   # Render generates a strong random token
